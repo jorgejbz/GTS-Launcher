@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GTS Launcher</string>
+    <string name="settings">Ajustes del launcher</string>
+    <string name="audit">Diagnóstico del sistema</string>
+    <string name="media_access">GTS Launcher · información de reproducción</string>
+</resources>

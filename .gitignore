@@ -1,0 +1,18 @@
+# Signing key: never published.
+llave-firma/
+*.jks
+keystore.properties
+
+# Build output and local tools.
+launcher/.gradle/
+launcher/build/
+launcher/app/build/
+local.properties
+.idea/
+*.iml
+
+# Personal working folders: built APKs, device diagnostics and vendor APKs pulled for analysis
+# (third-party, copyrighted; they must not be redistributed).
+apks/
+reportes/
+analisis/
