@@ -35,7 +35,7 @@
 | Indicador de luces encendidas (MCU 516) | T | OK |
 | Diagnóstico y guardado | E, T | OK, sin datos sensibles |
 | Actualización por Wi‑Fi (modo desarrollador) | E, T | OK |
-| Buscar actualizaciones en GitHub | T | Pendiente (1.1.0 sobre 1.1.0-dev) |
+| Buscar actualizaciones en GitHub | T | OK (1.1.0-dev → 1.1.0 desde GitHub) |
 | APK de lanzamiento (R8) en todas las pantallas | E | OK, sin cierres |
 
 ## Errores encontrados y corregidos
