@@ -115,15 +115,18 @@ final class PcLink {
         }, "pc-version").start();
     }
 
-    /** True when dotted version a (e.g. 0.12.0) is greater than b. */
+    /**
+     * True when dotted version a (e.g. 0.12.0) is greater than b. A pre-release suffix ("-dev")
+     * counts as older than the same numbers without it, so 1.1.0 is offered over 1.1.0-dev.
+     */
     static boolean newer(String a, String b) {
-        String[] x = a.split("\\."), y = b.split("\\.");
+        String[] x = a.split("-", 2)[0].split("\\."), y = b.split("-", 2)[0].split("\\.");
         for (int i = 0; i < Math.max(x.length, y.length); i++) {
             int p = i < x.length ? parse(x[i]) : 0;
             int q = i < y.length ? parse(y[i]) : 0;
             if (p != q) return p > q;
         }
-        return false;
+        return !a.contains("-") && b.contains("-");
     }
 
     private static int parse(String s) {

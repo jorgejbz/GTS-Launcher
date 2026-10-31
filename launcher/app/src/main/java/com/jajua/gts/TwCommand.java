@@ -94,7 +94,16 @@ final class TwCommand {
                         listener.onSourceChanged(TwCommand.this);
                     });
                 } else if (action != null) {
-                    main.post(() -> MediaLog.add(context, "xt: aviso " + action + " " + b.keySet()));
+                    StringBuilder sb = new StringBuilder();
+                    for (String k : b.keySet()) {
+                        if ("action".equals(k)) continue;
+                        Object v = b.get(k);
+                        sb.append(' ').append(k).append('=')
+                                .append(v instanceof int[] ? java.util.Arrays.toString((int[]) v)
+                                        : v instanceof byte[] ? java.util.Arrays.toString((byte[]) v) : String.valueOf(v));
+                    }
+                    String line = "xt: aviso " + action + sb;
+                    main.post(() -> MediaLog.add(context, line));
                 }
             }
             if (reply != null) reply.writeNoException();

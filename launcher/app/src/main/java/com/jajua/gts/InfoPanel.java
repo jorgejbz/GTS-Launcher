@@ -11,6 +11,7 @@ import android.widget.TextView;
 final class InfoPanel extends LinearLayout {
     private final TextView speed;
     private final TextView speedCaption;
+    private final TextView speedUnit;
     private final TextView time;
     private final TextView date;
     private final TextView title;
@@ -35,11 +36,11 @@ final class InfoPanel extends LinearLayout {
         row.setGravity(Gravity.BOTTOM);
         speed = Ui.text(c, 62, Ui.light, p.text);
         speed.setText("--");
-        TextView unit = Ui.text(c, 19, Ui.regular, p.subtext);
-        unit.setText(" km/h");
-        unit.setPadding(0, 0, 0, Ui.u(8));
+        speedUnit = Ui.text(c, 19, Ui.regular, p.subtext);
+        speedUnit.setText(" km/h");
+        speedUnit.setPadding(0, 0, 0, Ui.u(8));
         row.addView(speed);
-        row.addView(unit);
+        row.addView(speedUnit);
         addView(row, lp(Ui.u(6)));
         speedCaption = Ui.text(c, 13, Ui.regular, p.dim);
         addView(speedCaption, lp(Ui.u(4)));
@@ -77,13 +78,23 @@ final class InfoPanel extends LinearLayout {
         addView(controls, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
     }
 
-    void setSpeed(Float kmh, String caption) {
-        speed.setText(kmh == null ? "--" : String.valueOf(Math.round(kmh)));
+    void setSpeed(Integer value, String unit, String caption) {
+        speed.setText(value == null ? "--" : String.valueOf(value));
+        speedUnit.setText(" " + unit);
         speedCaption.setText(caption);
     }
 
-    void setTime(String t, String d) {
-        time.setText(t);
+    /** ampm: "AM"/"PM" for a 12-hour clock, drawn smaller after the time; null for 24 h. */
+    void setTime(String t, String ampm, String d) {
+        if (ampm == null) {
+            time.setText(t);
+        } else {
+            android.text.SpannableString s = new android.text.SpannableString(t + " " + ampm);
+            int start = t.length() + 1;
+            s.setSpan(new android.text.style.RelativeSizeSpan(0.45f), start, s.length(), 0);
+            s.setSpan(new android.text.style.ForegroundColorSpan(Palette.current.subtext), start, s.length(), 0);
+            time.setText(s);
+        }
         date.setText(d);
     }
 

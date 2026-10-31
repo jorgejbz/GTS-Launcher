@@ -188,6 +188,10 @@ final class Audit {
         h(sb, "Bus del estéreo (XTService) y voltaje de la MCU");
         sb.append(probeXt(c));
         sb.append(probeVoltage());
+        sb.append(probeLights());
+
+        h(sb, "Datos del vehículo (com.tw.carinfoservice)");
+        sb.append(probeCarInfo(c));
 
         h(sb, "Registro multimedia (últimos eventos de la pantalla de inicio)");
         sb.append(MediaLog.read(c));
@@ -306,6 +310,71 @@ final class Audit {
         String r = "  XTService: " + (xt.connected ? "conectado" : "sin conexión")
                 + " · fuente actual " + xt.source + " (1 radio, 3 música USB, 8 Bluetooth, 9 video, otro = app)\n";
         xt.stop();
+        return r;
+    }
+
+    /**
+     * Connects to the CANBUS data service (see CarInfo), listens for 5 s and reads every getter,
+     * so the report shows which vehicle data this car really provides.
+     */
+    private static String probeCarInfo(Context c) {
+        if (!CarInfo.installed(c)) return "  servicio no instalado\n";
+        StringBuilder sb = new StringBuilder();
+        sb.append("  unidad del sistema (SPEED_UNIT): ").append(CarInfo.systemUsesMiles(c) ? "millas" : "km").append('\n');
+        final CarInfo[] car = {null};
+        final java.util.concurrent.CountDownLatch connected = new java.util.concurrent.CountDownLatch(1);
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            car[0] = new CarInfo(c, x -> {
+                if (x.connected) connected.countDown();
+            });
+            car[0].start(0);
+            if (!car[0].bound()) connected.countDown();
+        });
+        try {
+            connected.await(3, java.util.concurrent.TimeUnit.SECONDS);
+            if (car[0] != null && car[0].connected) Thread.sleep(5000);
+        } catch (InterruptedException ignored) {
+            // Report whatever arrived.
+        }
+        if (car[0] == null || !car[0].connected) {
+            sb.append("  no se pudo conectar\n");
+        } else {
+            sb.append("  -- consultas (valor actual; -1 = el auto no lo envía) --\n");
+            sb.append(car[0].dumpGetters());
+            final String[] got = {null};
+            final java.util.concurrent.CountDownLatch read = new java.util.concurrent.CountDownLatch(1);
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                got[0] = car[0].dumpReceived();
+                read.countDown();
+            });
+            try {
+                read.await(2, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) {
+                // Reported as missing.
+            }
+            sb.append("  -- avisos recibidos en 5 s --\n").append(got[0] == null ? "  (sin datos)\n" : got[0]);
+        }
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            if (car[0] != null) car[0].stop();
+        });
+        return sb.toString();
+    }
+
+    /** Asks the MCU for the illumination (lights) state, see TwLights. */
+    private static String probeLights() {
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        TwLights l = new TwLights(x -> done.countDown());
+        l.start();
+        if (l.error == null) {
+            try {
+                done.await(3, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) {
+                // Reported below.
+            }
+        }
+        String r = "  luces (MCU 516): " + (l.error != null ? "error " + l.error
+                : l.on == null ? "sin respuesta en 3 s" : l.on ? "encendidas" : "apagadas") + "\n";
+        l.stop();
         return r;
     }
 

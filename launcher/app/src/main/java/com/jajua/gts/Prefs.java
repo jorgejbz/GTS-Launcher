@@ -35,16 +35,24 @@ final class Prefs {
         edit().putString("theme", key).apply();
     }
 
-    int accent() {
-        return sp.getInt("accent", 0);
+    /** Accent colour (ARGB). Falls back to the 1.0 preset index so an earlier choice survives. */
+    int accentColor() {
+        if (sp.contains("accent.color")) return sp.getInt("accent.color", Palette.DEFAULT_ACCENT) | 0xFF000000;
+        int i = sp.getInt("accent", 0);
+        return Palette.LEGACY_ACCENTS[i >= 0 && i < Palette.LEGACY_ACCENTS.length ? i : 0];
     }
 
-    void setAccent(int index) {
-        edit().putInt("accent", index).apply();
+    int glow() {
+        return sp.getInt("accent.glow", Palette.DEFAULT_GLOW);
+    }
+
+    void setAccent(int color, int glow) {
+        edit().putInt("accent.color", color | 0xFF000000).putInt("accent.glow", glow).remove("accent").apply();
     }
 
     void resetVisual() {
-        edit().remove("theme").remove("accent").remove("icons.original").apply();
+        edit().remove("theme").remove("accent").remove("accent.color").remove("accent.glow")
+                .remove("icons.original").apply();
     }
 
     /** Drawer shows the apps' own icons instead of the launcher's line icons. */
@@ -118,7 +126,36 @@ final class Prefs {
     // --- Speed source.
 
     String speedMode() {
-        return sp.getString("speed.mode", SpeedMonitor.OFF);
+        return sp.getString("speed.mode", SpeedMonitor.AUTO);
+    }
+
+    /**
+     * 1.1.0: the CANBUS speed source was found. Anyone left on "Desactivada" (the old default), or
+     * on the approximate GPS when the car's own data exists, moves once to "Automática".
+     */
+    void migrateSpeedMode(boolean canbus) {
+        if (sp.getBoolean("speed.migrated", false)) return;
+        String m = sp.getString("speed.mode", SpeedMonitor.AUTO);
+        SharedPreferences.Editor e = sp.edit().putBoolean("speed.migrated", true);
+        if (SpeedMonitor.OFF.equals(m) || (canbus && SpeedMonitor.GPS.equals(m))) e.putString("speed.mode", SpeedMonitor.AUTO);
+        e.apply();
+    }
+
+    boolean locationAsked() {
+        return sp.getBoolean("speed.locationAsked", false);
+    }
+
+    void setLocationAsked() {
+        sp.edit().putBoolean("speed.locationAsked", true).apply();
+    }
+
+    /** "auto" follows the system (Settings.System SPEED_UNIT), or forced "kmh" / "mph". */
+    String speedUnit() {
+        return sp.getString("speed.unit", SpeedMonitor.UNIT_AUTO);
+    }
+
+    void setSpeedUnit(String unit) {
+        edit().putString("speed.unit", unit).apply();
     }
 
     String speedAction() {

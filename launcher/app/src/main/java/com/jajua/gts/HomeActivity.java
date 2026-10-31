@@ -28,7 +28,7 @@ import java.util.Locale;
  */
 public final class HomeActivity extends Activity implements AppCatalog.Listener, StatusMonitor.Listener,
         MediaMonitor.Listener, SpeedMonitor.Listener, TwBluetooth.Listener, TwCommand.Listener,
-        TwVoltage.Listener, TLinkState.Listener, DrawerView.Callbacks {
+        TwVoltage.Listener, TwLights.Listener, TLinkState.Listener, DrawerView.Callbacks {
     private static final Role[] MAIN = {Role.CARPLAY, Role.ANDROID_AUTO, Role.RADIO, Role.BT_AUDIO};
     private static final Locale ES = new Locale("es");
 
@@ -46,6 +46,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
     private TwBluetooth btSong;
     private TwCommand xt;
     private TwVoltage voltage;
+    private TwLights lights;
     private TLinkState tlink;
 
     /** What the playback panel currently shows, which decides where its buttons go. */
@@ -66,6 +67,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         @Override
         public void run() {
             voltage.request();
+            lights.request();
             main.postDelayed(this, VOLTAGE_REFRESH_MS);
         }
     };
@@ -87,6 +89,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         btSong = new TwBluetooth(this, this);
         xt = new TwCommand(this, this);
         voltage = new TwVoltage(this);
+        lights = new TwLights(this);
         tlink = new TLinkState(this, this);
         build();
         tlink.register();
@@ -115,6 +118,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
     @Override
     protected void onStart() {
         super.onStart();
+        askLocationOnce();
         // Listeners only run while the home screen is visible: zero work while another app is in front.
         status.start();
         media.start();
@@ -122,6 +126,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         btSong.start();
         xt.start();
         voltage.start();
+        lights.start();
         main.postDelayed(voltageRefresh, VOLTAGE_REFRESH_MS);
     }
 
@@ -134,6 +139,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         xt.stop();
         main.removeCallbacks(voltageRefresh);
         voltage.stop();
+        lights.stop();
         super.onStop();
     }
 
@@ -248,6 +254,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
 
         onStatusChanged(status);
         refreshMedia();
+        top.setLights(lights.on);
         onSpeedChanged(speed);
         if (tlink != null) applyLinkLayout();
     }
@@ -265,13 +272,13 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
     public void onStatusChanged(StatusMonitor s) {
         top.setStatus(s);
         Date now = new Date();
-        String time = DateFormat.is24HourFormat(this)
-                ? new SimpleDateFormat("HH:mm", ES).format(now)
-                : new SimpleDateFormat("h:mm", ES).format(now);
+        boolean h24 = DateFormat.is24HourFormat(this);
+        String time = new SimpleDateFormat(h24 ? "HH:mm" : "h:mm", ES).format(now);
+        // 12-hour clock: plain "AM"/"PM" (Spanish locale would give "a. m."/"p. m.").
+        String ampm = h24 ? null : new SimpleDateFormat("a", Locale.US).format(now);
         String date = new SimpleDateFormat("EEEE d 'de' MMMM", ES).format(now);
         date = date.substring(0, 1).toUpperCase(ES) + date.substring(1);
-        top.setTime(time);
-        info.setTime(time, date);
+        info.setTime(time, ampm, date);
         refreshTiles();
     }
 
@@ -321,6 +328,12 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         lp.leftMargin = leftMargin;
         t.setLayoutParams(lp);
         t.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void onLights(Boolean on) {
+        MediaLog.add(this, "luces: " + (on == null ? "sin dato" : on ? "encendidas" : "apagadas"));
+        top.setLights(on);
     }
 
     @Override
@@ -432,9 +445,31 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         }
     }
 
+    /**
+     * "Automática" falls back to the GPS speed (as the stock theme does) when the car reports none,
+     * which needs the location permission. Asked once; afterwards it is changed in Ajustes.
+     */
+    private void askLocationOnce() {
+        if (!SpeedMonitor.AUTO.equals(prefs.speedMode()) || prefs.locationAsked()) return;
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) return;
+        prefs.setLocationAsked();
+        requestPermissions(new String[] {android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION}, 7);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == 7) {
+            // Restart so the GPS listener is registered with the new permission.
+            speed.stop();
+            speed.start();
+        }
+    }
+
     @Override
     public void onSpeedChanged(SpeedMonitor s) {
-        info.setSpeed(s.kmh, s.caption);
+        info.setSpeed(s.display(), s.unitLabel(), s.caption);
     }
 
     private void refreshTiles() {

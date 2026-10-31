@@ -16,7 +16,7 @@ import android.view.View;
 
 /**
  * One of the tall main shortcuts. Drawn directly on the canvas: a graphite panel, a faint accent
- * glow at the bottom (static, computed once per size) and a line icon. Pressing lights a red bar.
+ * glow at the bottom (static, computed once per size) and a line icon. Pressing lights an accent bar.
  * An optional "?" badge in the corner opens connection help instead of the app.
  */
 final class Tile extends View {
@@ -90,7 +90,7 @@ final class Tile extends View {
         rect.set(0, 0, w, h);
         panel.setShader(new LinearGradient(0, 0, 0, h, p.panelTop, p.panelBottom, Shader.TileMode.CLAMP));
         glow.setShader(new RadialGradient(w / 2f, h * 1.05f, Math.max(1, w * 0.95f),
-                Ui.withAlpha(Palette.accent, 0.20f), 0x00000000, Shader.TileMode.CLAMP));
+                Ui.withAlpha(Palette.accent, Palette.glowAlpha(Palette.glow)), 0x00000000, Shader.TileMode.CLAMP));
         edge.setShader(new LinearGradient(0, 0, 0, h, Ui.withAlpha(0xFFFFFFFF, 0.16f),
                 Ui.withAlpha(0xFFFFFFFF, 0.04f), Shader.TileMode.CLAMP));
         help.set(w - Ui.uf(48), 0, w, Ui.uf(48));

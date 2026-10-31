@@ -12,13 +12,16 @@ import android.widget.TextView;
  */
 final class TopBar extends LinearLayout {
     private final Context c;
+    /** Green low-beam tell-tale, as on the instrument cluster. */
+    static final int LIGHTS_GREEN = 0xFF3DDC84;
+
+    private final ImageView lights;
     private final ImageView note;
     private final TextView nowPlaying;
     private final ImageView phone;
     private final ImageView bluetooth;
     private final ImageView wifi;
     private final TextView volts;
-    private final TextView clock;
 
     TopBar(Context c, Runnable onMedia, Runnable onBluetooth, Runnable onWifi) {
         super(c);
@@ -28,6 +31,12 @@ final class TopBar extends LinearLayout {
 
         LinearLayout left = new LinearLayout(c);
         left.setGravity(Gravity.CENTER_VERTICAL);
+        lights = new ImageView(c);
+        lights.setImageDrawable(Ui.icon(c, R.drawable.ic_headlight, LIGHTS_GREEN));
+        lights.setContentDescription("Luces del auto encendidas");
+        lights.setPadding(0, Ui.u(14), Ui.u(14), Ui.u(14));
+        lights.setVisibility(GONE);
+        left.addView(lights, new LayoutParams(Ui.u(26 + 14), LayoutParams.MATCH_PARENT));
         note = icon(R.drawable.ic_music, p.subtext, 18);
         left.addView(note);
         nowPlaying = Ui.text(c, 15, Ui.regular, p.subtext);
@@ -56,14 +65,14 @@ final class TopBar extends LinearLayout {
             v.setPadding(Ui.u(9), Ui.u(14), Ui.u(9), Ui.u(14));
             right.addView(v, new LayoutParams(Ui.u(38), LayoutParams.MATCH_PARENT));
         }
-        clock = Ui.text(c, 22, Ui.medium, p.text);
-        clock.setPadding(Ui.u(12), 0, Ui.u(4), 0);
-        right.addView(clock);
+        // No clock here: the vehicle panel already shows the time on the home screen.
+        right.setPadding(0, 0, Ui.u(4), 0);
         addView(right, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
     }
 
-    void setTime(String t) {
-        clock.setText(t);
+    /** null or false hides the indicator (unknown on head units without the MCU signal). */
+    void setLights(Boolean on) {
+        lights.setVisibility(Boolean.TRUE.equals(on) ? VISIBLE : GONE);
     }
 
     void setNowPlaying(String text) {

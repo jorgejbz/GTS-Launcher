@@ -33,16 +33,25 @@ final class Palette {
             0xFF090D12, 0xFF202833, 0xFF10151C, 0x29FFFFFF, 0xFFF0F3F7, 0xFF97A2B0, 0xFF55606D);
     static final Palette[] ALL = {GRAFITO, NEGRO, ACERO};
 
-    static final String[] ACCENT_NAMES = {"Rojo", "Rojo oscuro", "Plata"};
-    static final int[] ACCENTS = {0xFFE60012, 0xFFA8122A, 0xFFC9CED6};
+    /** Accents of 1.0, stored by index; still read so an existing choice is kept after updating. */
+    static final int[] LEGACY_ACCENTS = {0xFFE60012, 0xFFA8122A, 0xFFC9CED6};
+    static final int DEFAULT_ACCENT = 0xFFE60012;
+    /** Strength of the glow behind the home shortcuts, 0-100. 50 is the original look. */
+    static final int DEFAULT_GLOW = 50;
 
     static Palette current = GRAFITO;
-    static int accent = ACCENTS[0];
+    static int accent = DEFAULT_ACCENT;
+    static int glow = DEFAULT_GLOW;
 
     static void load(Prefs prefs) {
         current = GRAFITO;
         for (Palette p : ALL) if (p.key.equals(prefs.theme())) current = p;
-        int a = prefs.accent();
-        accent = ACCENTS[a >= 0 && a < ACCENTS.length ? a : 0];
+        accent = prefs.accentColor();
+        glow = prefs.glow();
+    }
+
+    /** Alpha of the glow's centre for a 0-100 level (50 gives the original 20 %). */
+    static float glowAlpha(int level) {
+        return Math.max(0, Math.min(100, level)) / 100f * 0.40f;
     }
 }

@@ -123,11 +123,11 @@ public final class SettingsActivity extends Activity {
                 build();
             }).show();
         });
-        row("Color de acento", Palette.ACCENT_NAMES[Math.max(0, Math.min(prefs.accent(), Palette.ACCENTS.length - 1))], () ->
-                Pickers.dialog(this).setTitle("Color de acento").setItems(Palette.ACCENT_NAMES, (d, w) -> {
-                    prefs.setAccent(w);
+        row("Color de acento", ColorPicker.name(Palette.accent) + " · resplandor " + Palette.glow + " %", () ->
+                ColorPicker.show(this, Palette.accent, Palette.glow, (color, glow) -> {
+                    prefs.setAccent(color, glow);
                     build();
-                }).show());
+                }));
         row("Iconos del cajón de aplicaciones", prefs.originalIcons() ? "Originales de cada app" : "Estilo del launcher", () -> {
             prefs.setOriginalIcons(!prefs.originalIcons());
             build();
@@ -139,9 +139,31 @@ public final class SettingsActivity extends Activity {
 
         section("Velocidad");
         String mode = prefs.speedMode();
-        String modeName = SpeedMonitor.GPS.equals(mode) ? "GPS (aproximada)"
-                : SpeedMonitor.BROADCAST.equals(mode) ? "Datos de otra app" : "Desactivada";
+        boolean canbus = CarInfo.installed(this);
+        String modeName = SpeedMonitor.CANBUS.equals(mode) ? "Datos del vehículo (CANBUS)"
+                : SpeedMonitor.GPS.equals(mode) ? "GPS (aproximada)"
+                : SpeedMonitor.BROADCAST.equals(mode) ? "Datos de otra app"
+                : SpeedMonitor.OFF.equals(mode) ? "Desactivada"
+                : canbus ? "Automática · datos del vehículo o GPS" : "Automática · GPS";
         row("Fuente de la velocidad", modeName, this::pickSpeedMode);
+        if (SpeedMonitor.AUTO.equals(mode) || SpeedMonitor.GPS.equals(mode)) {
+            boolean loc = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            row("Permiso de ubicación (GPS)", loc ? "Concedido" : "Sin permiso · toca para concederlo", loc ? null : () ->
+                    requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION}, 1));
+        }
+        String unit = prefs.speedUnit();
+        String unitName = SpeedMonitor.UNIT_KMH.equals(unit) ? "km/h"
+                : SpeedMonitor.UNIT_MPH.equals(unit) ? "mph"
+                : "Como el sistema · ahora " + (CarInfo.systemUsesMiles(this) ? "mph" : "km/h");
+        row("Unidad", unitName, () -> {
+            String[] names = {"Como el sistema (recomendado)", "Kilómetros por hora (km/h)", "Millas por hora (mph)"};
+            String[] units = {SpeedMonitor.UNIT_AUTO, SpeedMonitor.UNIT_KMH, SpeedMonitor.UNIT_MPH};
+            Pickers.dialog(this).setTitle("Unidad de velocidad").setItems(names, (d, w) -> {
+                prefs.setSpeedUnit(units[w]);
+                build();
+            }).show();
+        });
         if (SpeedMonitor.BROADCAST.equals(mode)) {
             row("Acción de la difusión", prefs.speedAction().isEmpty() ? "Sin configurar" : prefs.speedAction(),
                     () -> ask("Acción (intent action)", prefs.speedAction(), v ->
@@ -154,9 +176,9 @@ public final class SettingsActivity extends Activity {
                 build();
             });
         }
-        note("Desactivada por defecto. «GPS» usa la velocidad "
-                + "que informa el receptor de satélites y siempre se marca como aproximada. «Datos de otra app» "
-                + "sirve para una app de CANBUS que difunda la velocidad. Es solo informativa: no sustituye al velocímetro.");
+        note("«Automática» usa la velocidad del auto (CANBUS) cuando la informa y, si no, la del GPS, "
+                + "como el tema original; con la unidad del sistema (km o millas). "
+                + "Es solo informativa: no sustituye al velocímetro.");
 
         section("Multimedia");
         boolean access = MediaMonitor.hasAccess(this);
@@ -279,8 +301,9 @@ public final class SettingsActivity extends Activity {
     }
 
     private void pickSpeedMode() {
-        String[] names = {"Desactivada", "GPS (aproximada)", "Datos de otra app (CANBUS)"};
-        String[] modes = {SpeedMonitor.OFF, SpeedMonitor.GPS, SpeedMonitor.BROADCAST};
+        String[] names = {"Automática (recomendado)", "Datos del vehículo (CANBUS)", "GPS (aproximada)",
+                "Datos de otra app (difusión)", "Desactivada"};
+        String[] modes = {SpeedMonitor.AUTO, SpeedMonitor.CANBUS, SpeedMonitor.GPS, SpeedMonitor.BROADCAST, SpeedMonitor.OFF};
         Pickers.dialog(this).setTitle("Fuente de la velocidad").setItems(names, (d, w) -> {
             prefs.setSpeed(modes[w], prefs.speedAction(), prefs.speedExtra(), prefs.speedInMs());
             if (SpeedMonitor.GPS.equals(modes[w])

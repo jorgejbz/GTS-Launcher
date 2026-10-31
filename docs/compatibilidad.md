@@ -18,8 +18,11 @@ Probado a fondo en una **Topway TS10** (UIS7862, Android 10, 1280×720, firmware
 | Fuente de audio activa | XTService (`com.tw.service.xt`) | `Source_recieve` (1 radio, 8 Bluetooth, 0 app) | Topway | OK en TS10 | — |
 | Música de apps (YouTube, Spotify…) | Sesiones multimedia de Android | `MediaSessionManager` + acceso a notificaciones | Universal | OK en emulador | Requiere activar el acceso a notificaciones |
 | Voltaje de la batería | MCU vía `android.tw.john.TWUtil` (Topway) | Mensaje 1292, igual que la barra del sistema | Topway | OK en TS10 (≈11–14 V) | — |
-| Velocidad km/h | Receptor GPS | `LocationManager` (opcional, "aproximada") | Universal | OK en TS10 | No es la velocidad del CANBUS; no sustituye al velocímetro |
-| Velocidad por CANBUS | MCU (Topway) | — | Pendiente | — | Requiere identificar el mensaje de la MCU |
+| Velocidad (modo «Automática») | `com.tw.carinfoservice` (Topway) + receptor GPS | AIDL `CarServiceAidl` (`getInstantaneous_Speed`, callback `onInstantaneous_Speed`); si informa 0 o nada, `LocationManager` | Topway + universal | OK en TS10 en marcha (por GPS) | No sustituye al velocímetro |
+| Velocidad por CANBUS | MCU → `com.tw.carinfoservice` (mensaje 1291 de la MCU) | Mismo AIDL | Topway | Conecta, pero el auto de pruebas informa siempre 0 | Depende del adaptador CANBUS de cada auto |
+| Unidad km/h o mph | Ajuste del sistema `Settings.System SPEED_UNIT` | Lectura y observador del ajuste | Topway (en otras: km/h o elección manual) | OK en TS10 | — |
+| Otros datos del auto (RPM, temperaturas, combustible, llantas, puertas…) | `com.tw.carinfoservice` | Mismo AIDL; listados en el Diagnóstico | Topway | El auto de pruebas solo envía voltaje, tiempo de conducción, faros (0) y direccionales (0) | Depende del adaptador CANBUS |
+| Indicador de luces encendidas | MCU vía `android.tw.john.TWUtil` (Topway) | Mensaje 516 (`write(516, 255)`, `arg1 = 1` noche), igual que XTService | Topway | OK en TS10 | Es la entrada de iluminación (ILL); en autos sin ese cable no aparece |
 | Botón de luces | Cualquier app (Magic Lantern, etc.) | Abre la app elegida; nombre y visibilidad configurables | Universal | OK en TS10 | Control directo de las luces no implementado |
 | Mandos al volante | App del estéreo (`com.tw.keypad` en Topway) | Accesible desde el cajón | Universal | OK en TS10 | El launcher no lee ni reasigna botones |
 | Cajón de aplicaciones | Android | Lista de apps con icono + Ajustes de Android | Universal | OK en TS10 y emulador | — |

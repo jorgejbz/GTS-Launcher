@@ -28,9 +28,14 @@
 | Cajón: abrir apps de terceros | E, T | OK |
 | Voltaje de la MCU | T | OK (11,13 V con el motor apagado) |
 | Velocidad GPS | T | OK, marcada como aproximada |
+| Velocidad automática (CANBUS o GPS) | T | OK en marcha: GPS hasta 46 km/h; el CANBUS de este auto informa 0 |
+| Unidad km/h / mph según `SPEED_UNIT` del sistema | T | OK (km) |
+| Color de acento personalizado y resplandor | T | OK |
+| Hora con AM/PM en formato de 12 h, sin reloj duplicado en la barra | T | OK |
+| Indicador de luces encendidas (MCU 516) | T | OK |
 | Diagnóstico y guardado | E, T | OK, sin datos sensibles |
 | Actualización por Wi‑Fi (modo desarrollador) | E, T | OK |
-| Buscar actualizaciones en GitHub | E | Pendiente de la primera publicación |
+| Buscar actualizaciones en GitHub | T | Pendiente (1.1.0 sobre 1.1.0-dev) |
 | APK de lanzamiento (R8) en todas las pantallas | E | OK, sin cierres |
 
 ## Errores encontrados y corregidos
@@ -40,8 +45,10 @@
 - Descarga de APK cortada al final por el cierre de conexión en Windows → el servidor espera a que el cliente cierre.
 - El modo (CarPlay/Android Auto) seguía al botón pulsado → se toma de TLINK5.
 - XTService informa 0 con apps → se interpreta como "fuente: app".
+- La velocidad del CANBUS se queda en 0 en marcha en el auto de pruebas → «Automática» usa el GPS (como el tema original) y solo toma el CANBUS cuando informa movimiento.
+- Con el auto detenido el GPS oscila entre 0 y 4 km/h → por debajo de 5 km/h se muestra 0.
 
 ## Pendiente
 
-- Velocidad por CANBUS en Topway.
+- Velocidad por CANBUS en un auto cuyo adaptador sí la envíe (en la TS10 de pruebas llega siempre 0).
 - Pruebas en pantallas FYT y otras marcas (ayúdanos abriendo un issue con tu diagnóstico).

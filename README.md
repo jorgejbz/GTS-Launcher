@@ -8,11 +8,11 @@ Launcher minimalista y oscuro para **pantallas Android de auto** (estéreos "dob
 
 - **Pantalla de inicio** con cuatro accesos grandes: Apple CarPlay, Android Auto, Radio y Bluetooth Audio.
 - **CarPlay / Android Auto**: abre tu app de enlace (TLink5, ZLink, AutoKit, CarLinkit…). Con TLink5/ZLink detecta qué se conectó y **ese acceso se ensancha** sobre los dos lugares; al desconectar vuelven ambos.
-- **Panel del vehículo**: velocidad (opcional, por GPS), hora y lo que está sonando, con botones grandes de anterior / play-pausa / siguiente.
+- **Panel del vehículo**: velocidad (automática: del auto o del GPS, en km/h o mph según el sistema), hora (con AM/PM en formato de 12 h) y lo que está sonando, con botones grandes de anterior / play-pausa / siguiente.
 - **Dock**: botón de luces (configurable: luces interiores, de chasis o ninguno), cajón de aplicaciones y ajustes.
 - **Cajón de aplicaciones** con iconos del mismo estilo para todas las apps (o los originales, si lo prefieres).
 - **Pantalla completa**: oculta la barra de notificaciones y las flechas mientras estás en el inicio.
-- **Temas**: Grafito, Negro o Acero, con acento rojo, rojo oscuro o plata.
+- **Temas**: Grafito, Negro o Acero, con el color de acento que quieras (colores listos o barras de tono, intensidad y resplandor, con vista previa).
 - **Actualización** desde la propia app (Ajustes › Buscar actualizaciones).
 
 ### Funciones extra en pantallas Topway (TS10 / TS18)
@@ -22,6 +22,9 @@ Si tu pantalla tiene los servicios Topway, el launcher los usa automáticamente:
 | Función | Cómo |
 |---|---|
 | Voltaje de la batería del auto en la barra superior | Leído de la MCU, igual que la barra del sistema |
+| Indicador verde de luces encendidas en la barra superior | Entrada de iluminación de la MCU (la que atenúa la pantalla) |
+| Velocidad del auto y unidad km/mi del sistema | Servicio CANBUS `com.tw.carinfoservice`; si el auto no la envía, se usa el GPS |
+| Datos del auto disponibles (RPM, temperaturas, llantas…) | Listados en el Diagnóstico, según lo que envíe el CANBUS de cada auto |
 | Fuente activa (radio, Bluetooth, app) | Servicio XTService del estéreo |
 | Botones de reproducción para radio, Bluetooth y apps | Mismo camino que los botones del volante |
 | Canción y estado play/pausa del Bluetooth del estéreo | App Bluetooth del estéreo |
@@ -52,7 +55,7 @@ En otras pantallas esas funciones simplemente no aparecen; todo lo demás funcio
 1. **Ajustes › Multimedia › Información de reproducción**: activa el acceso para GTS Launcher. Sin esto no puede mostrar la canción ni controlar la música de las apps.
 2. **Ajustes › Accesos**: revisa qué app abre cada acceso. Se detectan solas por el nombre; si alguna sale "No encontrada" o no es la correcta, tócala y elige la app.
 3. **Ajustes › Botón de luces**: elige la app de tus luces, el nombre del botón, u ocúltalo si no tienes.
-4. **Ajustes › Velocidad** (opcional): "GPS (aproximada)" muestra la velocidad del receptor GPS. Es informativa y **no sustituye al velocímetro**.
+4. **Ajustes › Velocidad**: "Automática" (predeterminada) usa la velocidad del auto si el estéreo la recibe y, si no, la del GPS (acepta el permiso de ubicación). La unidad sigue el ajuste del sistema o puedes fijar km/h o mph. Es informativa y **no sustituye al velocímetro**.
 
 ## Actualizar
 
@@ -70,7 +73,7 @@ Más detalle en [docs/recuperacion.md](docs/recuperacion.md). El launcher no mod
 | Permiso | Para qué | ¿Obligatorio? |
 |---|---|---|
 | Acceso a notificaciones | Leer qué suena y controlar la reproducción | No (sin él no hay info de música) |
-| Ubicación | Solo si eliges velocidad por GPS | No |
+| Ubicación | Velocidad por GPS (modo "Automática" o "GPS") | No (sin él solo se usa la velocidad del auto, si existe) |
 | Instalar apps desconocidas | Instalar actualizaciones desde la app | No |
 | Bluetooth, red, Wi‑Fi | Mostrar los indicadores de estado | Automático |
 
@@ -80,7 +83,7 @@ No envía datos a ningún servidor. Solo se conecta a internet cuando tocas "Bus
 
 - **Nombre de la canción en CarPlay/Android Auto**: TLink5 no lo comparte con el sistema, así que se muestra "Apple CarPlay · Sonando en TLINK5" (los botones sí funcionan).
 - **Frecuencia de la radio**: la app de radio de los Topway no la publica; el acceso abre la radio y se cambia de banda dentro de ella.
-- **Velocidad real del CANBUS**: aún no implementada; solo GPS (aproximada).
+- **Velocidad del CANBUS**: depende del adaptador de cada auto; en el auto de pruebas llega siempre 0 y se usa el GPS, igual que el tema original.
 - Android 12+ puede pedir permiso de "Dispositivos cercanos" para mostrar el icono de Bluetooth.
 
 Tabla completa en [docs/compatibilidad.md](docs/compatibilidad.md) y pruebas realizadas en [docs/pruebas.md](docs/pruebas.md).
