@@ -15,6 +15,7 @@ import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -93,6 +94,8 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         tlink = new TLinkState(this, this);
         build();
         tlink.register();
+        // Reconnect the ambient lights (if the user linked them) so the accent colour reaches them.
+        LightsService.sync(this);
 
         IntentFilter f = new IntentFilter();
         f.addAction(Intent.ACTION_PACKAGE_ADDED);
@@ -241,7 +244,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         ml.topMargin = Ui.u(6);
         home.addView(main, ml);
 
-        dock = new Dock(this, () -> openRole(Role.LANTERN), this::openDrawer, this::openSettings);
+        dock = new Dock(this, this::openLights, this::quickToggleLights, this::openDrawer, this::openSettings);
         home.addView(dock, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Ui.u(112)));
         root.addView(home);
 
@@ -376,8 +379,10 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
         } else if (sessionMeta && (sessionPlaying || phoneLink)) {
             panel = Panel.SESSION;
             String label = appLabel(media.pkg);
+            // CarPlay/Android Auto: the real play/pause state isn't reliable here, so show one
+            // combined play/pause button (it still works, it just doesn't try to reflect the state).
             info.show(media.title, media.artist, label != null ? (media.playing ? "En " : "Pausado · ") + label : "",
-                    true, true, media.playing ? Boolean.TRUE : phoneLink ? null : Boolean.FALSE);
+                    true, true, phoneLink ? null : media.playing ? Boolean.TRUE : Boolean.FALSE);
             line = media.artist != null ? media.title + " · " + media.artist : media.title;
             logLine = "sesión " + media.pkg;
         } else if (phoneLink && src != TwCommand.SOURCE_BT && btSong.title != null
@@ -406,7 +411,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
                 // Confirmed on the TS10: TLINK5 shares neither the track nor play/pause state, and
                 // the phone does not send it over the head unit's Bluetooth during CarPlay either.
                 info.show(linkMode, "El teléfono no comparte el nombre de la canción",
-                        label != null ? "Sonando en " + label : "", true, true, tlink.audioPlaying);
+                        label != null ? "Sonando en " + label : "", true, true, null);
             } else {
                 info.show(label != null ? "Audio de " + label : "Reproduciendo", "La app no comparte el nombre de la canción",
                         label != null ? "En " + label : "", true, true, media.playing ? Boolean.TRUE : null);
@@ -417,7 +422,7 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
             AppCatalog.App linkApp = link != null ? AppCatalog.find(link.pkg) : null;
             info.show(linkMode, "El teléfono no comparte el nombre de la canción",
                     "Conectado por " + (linkApp != null ? linkApp.label : "la app de enlace"),
-                    true, true, tlink.audioPlaying);
+                    true, true, null);
             logLine = "tlink conectado sin sesión (" + tlink.rawMode + ")";
         } else if (lastSource == Role.RADIO && !appSource) {
             panel = Panel.RADIO;
@@ -601,6 +606,23 @@ public final class HomeActivity extends Activity implements AppCatalog.Listener,
 
     private void openSettings() {
         startActivity(new Intent(this, SettingsActivity.class));
+    }
+
+    private void openLights() {
+        startActivity(new Intent(this, LightsActivity.class));
+    }
+
+    /** Long-press on the dock lights button: toggle the lights on/off without opening the panel. */
+    private void quickToggleLights() {
+        if (prefs.lightsAddress() == null) {
+            openLights();
+            return;
+        }
+        boolean next = !prefs.lightsOn();
+        prefs.setLightsOn(next);
+        LightsService.sync(this);
+        AmbientLights.get(this).setOn(next);
+        Toast.makeText(this, next ? "Luces encendidas" : "Luces apagadas", Toast.LENGTH_SHORT).show();
     }
 
     private void openDrawer() {

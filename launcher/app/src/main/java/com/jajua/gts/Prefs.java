@@ -104,6 +104,113 @@ final class Prefs {
         edit().putBoolean("lights.shown", shown).apply();
     }
 
+    // --- Ambient RGB lights controlled by the launcher over BLE (see AmbientLights).
+    // These don't affect the home layout, so they never bump the visual stamp.
+
+    /** When on, the accent colour and the lights are one: applying a colour sends it to the lights.
+     * On by default so, once a controller is chosen, colour and lights always stay together. */
+    boolean lightsLinkColor() {
+        return sp.getBoolean("lights.link", true);
+    }
+
+    void setLightsLinkColor(boolean on) {
+        sp.edit().putBoolean("lights.link", on).apply();
+    }
+
+    /** BLE address of the chosen light controller, or null if none picked. */
+    String lightsAddress() {
+        String a = sp.getString("lights.addr", "");
+        return a.isEmpty() ? null : a;
+    }
+
+    /** Friendly name shown in Ajustes for the chosen controller. */
+    String lightsDeviceName() {
+        return sp.getString("lights.name", "");
+    }
+
+    void setLightsDevice(String address, String name) {
+        SharedPreferences.Editor e = sp.edit();
+        if (address == null) e.remove("lights.addr").remove("lights.name");
+        else e.putString("lights.addr", address).putString("lights.name", name == null ? "" : name);
+        e.apply();
+    }
+
+    /** Last brightness sent to the lights, 0-100. */
+    int lightsBrightness() {
+        return sp.getInt("lights.bright", 100);
+    }
+
+    void setLightsBrightness(int pct) {
+        sp.edit().putInt("lights.bright", Math.max(0, Math.min(100, pct))).apply();
+    }
+
+    /** Whether the lights are meant to be on (so the panel shows the right state). */
+    boolean lightsOn() {
+        return sp.getBoolean("lights.on", true);
+    }
+
+    void setLightsOn(boolean on) {
+        sp.edit().putBoolean("lights.on", on).apply();
+    }
+
+    // --- Last light state, replayed when the controller reconnects (so it comes back as left).
+
+    static final String MODE_COLOR = "color", MODE_EFFECT = "effect", MODE_SCENE = "scene";
+
+    /** What the lights were last showing: a solid colour, an effect, or a scene. */
+    String lightsMode() {
+        return sp.getString("lights.mode", MODE_COLOR);
+    }
+
+    int lightsEffect() {
+        return sp.getInt("lights.effect", -1);
+    }
+
+    int lightsScene() {
+        return sp.getInt("lights.scene", -1);
+    }
+
+    void setLightsColorMode() {
+        sp.edit().putString("lights.mode", MODE_COLOR).apply();
+    }
+
+    void setLightsEffect(int id) {
+        sp.edit().putString("lights.mode", MODE_EFFECT).putInt("lights.effect", id).apply();
+    }
+
+    void setLightsScene(int id) {
+        sp.edit().putString("lights.mode", MODE_SCENE).putInt("lights.scene", id).apply();
+    }
+
+    /** Effect speed 1..100. */
+    int lightsSpeed() {
+        return sp.getInt("lights.speed", 50);
+    }
+
+    void setLightsSpeed(int speed) {
+        sp.edit().putInt("lights.speed", Math.max(1, Math.min(100, speed))).apply();
+    }
+
+    // --- Music mode tuning.
+
+    /** Microphone sensitivity 1..100 (higher reacts to quieter sound). */
+    int lightsMusicSensitivity() {
+        return sp.getInt("lights.music.sens", 50);
+    }
+
+    void setLightsMusicSensitivity(int pct) {
+        sp.edit().putInt("lights.music.sens", Math.max(1, Math.min(100, pct))).apply();
+    }
+
+    /** Music mode cycles through the rainbow instead of pulsing the accent colour. */
+    boolean lightsMusicRainbow() {
+        return sp.getBoolean("lights.music.rainbow", false);
+    }
+
+    void setLightsMusicRainbow(boolean on) {
+        sp.edit().putBoolean("lights.music.rainbow", on).apply();
+    }
+
     /** Shows the PC link and vendor-APK tools (7 taps on the version in Ajustes). */
     boolean devMode() {
         // Someone already using the PC link keeps it after updating.

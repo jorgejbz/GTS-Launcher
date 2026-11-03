@@ -35,8 +35,15 @@ public final class SettingsActivity extends Activity {
         build();
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) Ui.hideSystemBars(this);
+    }
+
     private void build() {
-        Ui.init(this);
+        Ui.init(this, true);
+        Ui.hideSystemBars(this);
         Palette.load(prefs);
         Palette p = Palette.current;
 
@@ -126,6 +133,7 @@ public final class SettingsActivity extends Activity {
         row("Color de acento", ColorPicker.name(Palette.accent) + " · resplandor " + Palette.glow + " %", () ->
                 ColorPicker.show(this, Palette.accent, Palette.glow, (color, glow) -> {
                     prefs.setAccent(color, glow);
+                    AmbientLights.get(this).pushAccentIfLinked();
                     build();
                 }));
         row("Iconos del cajón de aplicaciones", prefs.originalIcons() ? "Originales de cada app" : "Estilo del launcher", () -> {
@@ -134,8 +142,17 @@ public final class SettingsActivity extends Activity {
         });
         row("Restaurar apariencia predeterminada", "Grafito con acento rojo", () -> {
             prefs.resetVisual();
+            AmbientLights.get(this).pushAccentIfLinked();
             build();
         });
+
+        section("Luces ambientales");
+        String dev = prefs.lightsDeviceName();
+        boolean hasDev = prefs.lightsAddress() != null;
+        row("Luces ambientales", hasDev ? (dev.isEmpty() ? "Controlador conectado" : "Conectadas a " + dev)
+                : "Abrir la pantalla de luces", () -> startActivity(new Intent(this, LightsActivity.class)));
+        note("Controla por Bluetooth las luces RGB (las mismas de apps tipo Magic Lantern) desde el botón de "
+                + "luces del inicio. El color es el mismo que el acento del launcher: al cambiarlo, cambian las dos.");
 
         section("Velocidad");
         String mode = prefs.speedMode();

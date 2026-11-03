@@ -9,9 +9,20 @@
     <!-- Wi-Fi indicator. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <!-- Bluetooth on/off and "phone connected" indicator. Read-only: the launcher never connects. -->
+    <!-- Bluetooth on/off and "phone connected" indicator, plus controlling the ambient RGB lights. -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Scanning for the light controller; never used to derive location. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <!-- Keeps the BLE link to the lights alive in the background. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Only for the music mode: react the lights to sound from the microphone. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Only requested at runtime if the user picks "GPS (aproximada)" as the speed source. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -69,9 +80,21 @@
             android:exported="false"
             android:label="@string/audit" />
 
+        <activity
+            android:name=".LightsActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|fontScale"
+            android:exported="false"
+            android:label="@string/settings" />
+
         <receiver
             android:name=".InstallReceiver"
             android:exported="false" />
+
+        <!-- Keeps the ambient RGB lights connected over BLE so the accent colour reaches them live. -->
+        <service
+            android:name=".LightsService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
         <!-- Exists only so Android lets the launcher read the active media sessions (song, controls).
              It ignores every notification. The user has to enable it once in system settings. -->

@@ -67,6 +67,11 @@ final class TwBluetooth {
             String t = clean(intent.getStringExtra("musicTitle"));
             String a = clean(intent.getStringExtra("musicArtist"));
             int progress = intent.getIntExtra("musicProgress", -1);
+            // The BT app sometimes answers our one-per-second query with an empty title (between
+            // tracks, or a spurious reply). Keep the last song instead of flashing "Bluetooth Audio"
+            // and churning the play/pause button. Pause is still detected by progress going stale
+            // (checkLive runs from the poll), and a real reply always carries the title.
+            if (t == null) return;
             boolean sameSong = t != null && t.equals(title);
             long now = SystemClock.elapsedRealtime();
             if (now < assumeUntil) {

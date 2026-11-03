@@ -14,12 +14,19 @@ import android.widget.TextView;
 final class Dock extends LinearLayout {
     private final Context c;
 
-    Dock(Context c, Runnable onLights, Runnable onApps, Runnable onSettings) {
+    Dock(Context c, Runnable onLights, Runnable onLightsLong, Runnable onApps, Runnable onSettings) {
         super(c);
         this.c = c;
         setGravity(Gravity.CENTER);
         Prefs prefs = Prefs.get(c);
-        if (prefs.lightsShown()) addView(button(R.drawable.ic_lantern, prefs.lightsLabel(), onLights));
+        if (prefs.lightsShown()) {
+            LinearLayout lights = button(R.drawable.ic_lantern, prefs.lightsLabel(), onLights);
+            if (onLightsLong != null) lights.setOnLongClickListener(v -> {
+                onLightsLong.run();
+                return true;
+            });
+            addView(lights);
+        }
         addView(button(R.drawable.ic_apps, "Aplicaciones", onApps));
         addView(button(R.drawable.ic_settings, "Ajustes", onSettings));
     }

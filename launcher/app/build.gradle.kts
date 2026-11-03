@@ -24,8 +24,8 @@ android {
         minSdk = 26
         targetSdk = 36
         // versionCode only ever grows (Android refuses downgrades).
-        versionCode = 110
-        versionName = "1.2.0-dev"
+        versionCode = 112
+        versionName = "1.2.0"
     }
 
     signingConfigs {
